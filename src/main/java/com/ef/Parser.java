@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -37,14 +38,11 @@ public class Parser implements CommandLineRunner {
         FileInputStream accessLogStream = new FileInputStream(accessLogPath);
 
         Scanner accessLogScanner = new Scanner(accessLogStream);
-        accessLogRepository.deleteAllInBatch();
-        int coun = 0;
         List<AccessLog> list = new ArrayList<>();
         Instant start = Instant.now();
-
+        Integer threadIndex = 0;
         while (accessLogScanner.hasNext()) {
             String nextLine = accessLogScanner.nextLine();
-            coun++;
             String[] data = nextLine.split("\\|");
             AccessLog accessLog = new AccessLog();
 
@@ -56,18 +54,20 @@ public class Parser implements CommandLineRunner {
             list.add(accessLog);
 
             if (list.size() > 10000) {
-                constructThread(list);
+
+                constructThread(list, threadIndex.toString());
+                threadIndex++;
                 list = new ArrayList<>();
 
 
             }
 
         }
-        constructThread(list);
+        constructThread(list, threadIndex.toString());
         Instant finish = Instant.now();
 
         long timeElapsed = Duration.between(start, finish).getSeconds();  //in millis
-        System.out.println("timeElapsed = " + timeElapsed);
+    //    System.out.println("timeElapsed = " + timeElapsed);
     }
 
     private LocalDateTime parseDate(String accessDate) {
@@ -77,9 +77,19 @@ public class Parser implements CommandLineRunner {
         return LocalDateTime.parse(accessDate, dateFormatter);
     }
 
-    private void constructThread(List<AccessLog> list) {
-        new Thread(() ->
-                accessLogRepository.saveAll(list)).start();
+    private void constructThread(List<AccessLog> list, String threadName) {
+        new Thread(() -> {
+            String name = Thread.currentThread().getName();
+
+            Instant start = Instant.now();
+            System.out.println(name + " Thread Start " + new Date());
+            accessLogRepository.saveAll(list);
+            System.out.println(name + " Thread Finish " + new Date());
+            Instant finish = Instant.now();
+
+            long timeElapsed = Duration.between(start, finish).toMillis();
+            System.out.println("timeElapsed " + name + " = " + timeElapsed);
+        }, threadName).start();
 
     }
 }
