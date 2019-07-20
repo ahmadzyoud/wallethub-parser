@@ -1,0 +1,9 @@
+spring:
+ jpa:
+  hibernate:
+   ddl-auto: none
+ datasource:
+  driverClassName: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost:3306/accesslog?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+  username: accesslog
+  password: accesslog
