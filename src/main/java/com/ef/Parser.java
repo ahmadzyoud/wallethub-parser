@@ -64,10 +64,14 @@ public class Parser implements CommandLineRunner {
 
         }
         constructThread(list, threadIndex.toString());
-        Instant finish = Instant.now();
 
-        long timeElapsed = Duration.between(start, finish).getSeconds();  //in millis
-    //    System.out.println("timeElapsed = " + timeElapsed);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Instant finish = Instant.now();
+            long timeElapsed = Duration.between(start, finish).getSeconds();  //in millis
+            System.out.println("timeElapsed = " + timeElapsed);
+            //System.out.println("END TIME " + new Date());
+        }));
+
     }
 
     private LocalDateTime parseDate(String accessDate) {
