@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.commons.cli.*;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -85,33 +86,6 @@ public class Command {
         }
         setThreshold(Integer.valueOf(cmd.getOptionValue("threshold")));
 
-
-       /* for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (!arg.startsWith("--")) {
-                throw new RuntimeException("arg shoud start with --");
-            }
-
-            arg = arg.replace("--", "");
-
-            if (!arg.startsWith("accesslog") || !arg.startsWith("startDate") || !arg.startsWith("duration") || !arg.startsWith("threshold")) {
-                throw new RuntimeException("allowed arg values are : accesslog, startDate, duration and threshold");
-            }
-
-            if (!arg.contains("=")) {
-                throw new RuntimeException("arg should be key value pair");
-            }
-            String[] com = arg.split("=");
-            String commnad = com[0];
-            String value = com[1];
-
-            switch (commnad) {
-                case "accesslog":
-                    setAccessLogPath("");
-                    break;
-            }
-
-        }*/
     }
 
 
@@ -119,6 +93,11 @@ public class Command {
     private LocalDateTime startDate;
     private Duration duration;
     private Integer threshold;
+
+
+    public boolean isContainInsertComand() {
+        return StringUtils.hasText(accessLogPath);
+    }
 
 
 }

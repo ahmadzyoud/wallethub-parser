@@ -1,8 +1,13 @@
 package com.ef.service;
 
-import org.springframework.stereotype.Service;
+import com.ef.domain.AccessLog;
+import com.ef.model.Command;
 
-@Service
-public class AccessLogService {
+import java.util.List;
 
+public interface AccessLogService {
+
+    void insert(Command command);
+
+    List<AccessLog> search(Command command);
 }

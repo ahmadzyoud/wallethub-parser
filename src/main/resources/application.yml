@@ -5,10 +5,9 @@ spring:
   properties:
    hibernate:
     generate_statistics: true
-    batch_size: 1000
+    batch_size: 30
     order_insert: true
  datasource:
-  driverClassName: com.mysql.jdbc.Driver
   url: jdbc:mysql://localhost:3306/accesslog?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&rewriteBatchedStatements=true
   username: accesslog
   password: accesslog
