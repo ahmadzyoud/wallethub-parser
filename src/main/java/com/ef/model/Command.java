@@ -15,35 +15,41 @@ import java.time.format.DateTimeFormatter;
 @ToString
 public class Command {
 
+    public static final String ACCESS_LOG_ARG = "accesslog";
+    public static final String START_DATE_ARG = "startDate";
+    public static final String DURATION_ARG = "duration";
+    public static final String THRESHOLD_ARG = "threshold";
+    public static final String ARG_DATE_FORMAT = "yyyy-MM-dd.HH:mm:ss";
+
 
     public Command(String... args) throws ParseException {
 
         Options options = new Options();
 
-        Option accesslog = Option.builder()
-                .longOpt("accesslog")
-                .argName("accesslog")
+        Option accesslogArg = Option.builder()
+                .longOpt(ACCESS_LOG_ARG)
+                .argName(ACCESS_LOG_ARG)
                 .hasArg()
                 .desc("accesslog ile path")
                 .build();
 
-        Option startDate = Option.builder()
-                .longOpt("startDate")
-                .argName("startDate")
+        Option startDateArg = Option.builder()
+                .longOpt(START_DATE_ARG)
+                .argName(START_DATE_ARG)
                 .hasArg()
                 .desc("start Date")
                 .required()
                 .build();
 
-        Option duration = Option.builder()
-                .longOpt("duration")
-                .argName("duration")
+        Option durationArg = Option.builder()
+                .longOpt(DURATION_ARG)
+                .argName(DURATION_ARG)
                 .hasArg()
                 .desc("duration")
                 .required()
                 .build();
 
-        Option threshold = Option.builder()
+        Option thresholdArg = Option.builder()
                 .longOpt("threshold")
                 .argName("threshold")
                 .hasArg()
@@ -51,15 +57,15 @@ public class Command {
                 .required()
                 .build();
 
-        options.addOption(accesslog);
-        options.addOption(startDate);
-        options.addOption(duration);
-        options.addOption(threshold);
+        options.addOption(accesslogArg);
+        options.addOption(startDateArg);
+        options.addOption(durationArg);
+        options.addOption(thresholdArg);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        if (!cmd.hasOption("startDate") || !cmd.hasOption("duration") || !cmd.hasOption("threshold")) {
+        if (!cmd.hasOption(START_DATE_ARG) || !cmd.hasOption(DURATION_ARG) || !cmd.hasOption("threshold")) {
             throw new RuntimeException("args Should be either like this format\n" +
                     "--accesslog=/path/to/file --startDate=2017-01-01.13:00:00 --duration=hourly --threshold=100\n" +
                     " or \n" +
@@ -67,24 +73,28 @@ public class Command {
         }
 
 
-        if (cmd.hasOption("accesslog")) {
-            setAccessLogPath(cmd.getOptionValue("accesslog"));
+        if (cmd.hasOption(ACCESS_LOG_ARG)) {
+            String accessLogValue = cmd.getOptionValue(ACCESS_LOG_ARG);
+            setAccessLogPath(accessLogValue);
         }
 
-        String dateTimePattern = "yyyy-dd-MM.HH:mm:ss";
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
 
-        setStartDate(LocalDateTime.parse(cmd.getOptionValue("startDate"), dateFormatter));
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(ARG_DATE_FORMAT);
 
-        String durationValue = cmd.getOptionValue("duration");
-        if ("hourly".equalsIgnoreCase(durationValue)) {
+        String startDateValue = cmd.getOptionValue(START_DATE_ARG);
+        LocalDateTime startDate = LocalDateTime.parse(startDateValue, dateFormatter);
+        setStartDate(startDate);
+
+        String durationValue = cmd.getOptionValue(DURATION_ARG);
+        if (Duration.HOURLY.toString().equalsIgnoreCase(durationValue)) {
             setDuration(Duration.HOURLY);
-        } else if ("daily".equalsIgnoreCase(durationValue)) {
+        } else if (Duration.DAILY.toString().equalsIgnoreCase(durationValue)) {
             setDuration(Duration.DAILY);
         } else {
-            throw new RuntimeException("Wrong duration value allowed values: hourly, daily");
+            throw new RuntimeException("Wrong duration value, allowed values: hourly, daily");
         }
-        setThreshold(Integer.valueOf(cmd.getOptionValue("threshold")));
+        String thresholdValue = cmd.getOptionValue(THRESHOLD_ARG);
+        setThreshold(Integer.valueOf(thresholdValue));
 
     }
 

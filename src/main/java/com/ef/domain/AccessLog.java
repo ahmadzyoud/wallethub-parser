@@ -4,11 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import java.time.LocalDateTime;
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "ACCESS_LOG")
@@ -18,19 +15,12 @@ import java.time.LocalDateTime;
 public class AccessLog {
 
     @Id
-    /*@GeneratedValue(
-            strategy = GenerationType.AUTO,
-            generator = "native"
-    )
-    @GenericGenerator(
-            name = "native",
-            strategy = "native"
-    )*/
     private Long id;
 
 
     @Column
-    private LocalDateTime accessDate;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date accessDate;
 
 
     @Column

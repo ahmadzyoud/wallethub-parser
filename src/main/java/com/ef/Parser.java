@@ -1,6 +1,6 @@
 package com.ef;
 
-import com.ef.domain.AccessLog;
+import com.ef.domain.AccessIpStatistics;
 import com.ef.model.Command;
 import com.ef.repository.CustomRepositoryImpl;
 import com.ef.service.AccessLogService;
@@ -29,11 +29,16 @@ public class Parser implements CommandLineRunner {
     public void run(String... args) throws Exception {
         Instant start = Instant.now();
         Command command = new Command(args);
-        if (command.isContainInsertComand()) {
-            accessLogService.insert(command);
-        }
 
-        List<AccessLog> result =  accessLogService.search(command);
+        if (command.isContainInsertComand()) {
+            System.out.println("88888888888888888888888888888888888888888888888888888888888 = " + System.nanoTime());
+            accessLogService.insert(command);
+            System.out.println("77777777777777777777777777777777777777777777777777777777777777777 = " + System.nanoTime());
+        }
+        System.out.println("BBBBBBBBBBBBBB = " + System.nanoTime());
+        List<AccessIpStatistics> result = accessLogService.search(command);
+
+        result.forEach(System.out::println);
 
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
