@@ -3,9 +3,11 @@ package com.ef.domain;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,14 +18,14 @@ import java.time.LocalDateTime;
 public class AccessLog {
 
     @Id
-    @GeneratedValue(
+    /*@GeneratedValue(
             strategy = GenerationType.AUTO,
             generator = "native"
     )
     @GenericGenerator(
             name = "native",
             strategy = "native"
-    )
+    )*/
     private Long id;
 
 

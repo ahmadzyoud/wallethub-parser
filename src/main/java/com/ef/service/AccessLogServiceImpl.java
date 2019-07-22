@@ -18,17 +18,16 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class AccessLogServiceImpl implements AccessLogService {
 
     private AccessLogRepository accessLogRepository;
 
-    private ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private ExecutorService executorService = Executors.newFixedThreadPool(25);
 
     private Integer recordCounts = 10000;
-
-    private Integer batchSize;
 
 
     public AccessLogRepository getAccessLogRepository() {
@@ -54,10 +53,34 @@ public class AccessLogServiceImpl implements AccessLogService {
         Scanner accessLogScanner = new Scanner(accessLogStream);
         List<AccessLog> list = new ArrayList<>();
         Integer threadIndex = 0;
+        AtomicLong atomicLong = new AtomicLong(1);
         while (accessLogScanner.hasNext()) {
             String nextLine = accessLogScanner.nextLine();
             String[] data = nextLine.split("\\|");
             AccessLog accessLog = new AccessLog();
+            accessLog.setId(atomicLong.getAndIncrement());
+            accessLog.setAccessDate(parseDate(data[0]));
+            accessLog.setIp(data[1]);
+            accessLog.setRequest(data[2]);
+            accessLog.setStatus(Integer.valueOf(data[3]));
+            accessLog.setUserAgent(data[4]);
+            list.add(accessLog);
+        }
+
+        System.out.println("AAAAAAAAAAA = " + System.nanoTime());
+
+        for (int i = 0; i < list.size(); i += recordCounts) {
+
+            constructThread(list.subList(i, (i + recordCounts) < (list.size() - 1) ? (i + recordCounts) : list.size()), threadIndex);
+
+
+        }
+
+        /*while (accessLogScanner.hasNext()) {
+            String nextLine = accessLogScanner.nextLine();
+            String[] data = nextLine.split("\\|");
+            AccessLog accessLog = new AccessLog();
+
             accessLog.setAccessDate(parseDate(data[0]));
             accessLog.setIp(data[1]);
             accessLog.setRequest(data[2]);
@@ -67,7 +90,7 @@ public class AccessLogServiceImpl implements AccessLogService {
 
             if (list.size() > recordCounts) {
 
-                constructThread(list, threadIndex.toString());
+                constructThread(list, threadIndex);
                 threadIndex++;
                 list = new ArrayList<>();
 
@@ -75,7 +98,7 @@ public class AccessLogServiceImpl implements AccessLogService {
             }
 
         }
-        constructThread(list, threadIndex.toString());
+        constructThread(list, threadIndex);*/
         executorService.shutdown();
     }
 
@@ -85,7 +108,7 @@ public class AccessLogServiceImpl implements AccessLogService {
     }
 
 
-    private void constructThread(List<AccessLog> list, String threadName) {
+    private void constructThread(List<AccessLog> list, Integer threadIndex) {
         executorService.submit(
                 () -> {
                     String name = Thread.currentThread().getName();
@@ -93,7 +116,7 @@ public class AccessLogServiceImpl implements AccessLogService {
                     Instant start = Instant.now();
                     System.out.println(name + " Thread Start " + new Date());
                     accessLogRepository.saveAll(list);
-                    accessLogRepository.flush();
+                    //customRepository.flush();
 
                     System.out.println(name + " Thread Finish " + new Date());
                     Instant finish = Instant.now();
