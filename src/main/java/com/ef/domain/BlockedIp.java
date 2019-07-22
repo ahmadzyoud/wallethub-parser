@@ -14,7 +14,7 @@ import javax.persistence.*;
 public class BlockedIp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
 
@@ -25,7 +25,7 @@ public class BlockedIp {
     private String blockReason;
 
     @Column
-    private Integer accessCount;
+    private Long accessCount;
 
 
 }

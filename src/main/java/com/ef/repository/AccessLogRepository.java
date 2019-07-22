@@ -19,4 +19,6 @@ public interface AccessLogRepository extends CustomRepository<AccessLog, Long> {
             "HAVING COUNT(al) >= :threshold ")
     List<AccessIpStatistics> findOverThresholdIp(@Param("startDate") Date startDate, @Param("endDate") Date endDate,
                                                  @Param("threshold") Long threshold);
+
+    AccessLog findFirstByOrderByIdDesc();
 }

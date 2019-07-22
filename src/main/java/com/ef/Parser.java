@@ -1,7 +1,9 @@
 package com.ef;
 
 import com.ef.domain.AccessIpStatistics;
+import com.ef.domain.BlockedIp;
 import com.ef.model.Command;
+import com.ef.repository.BlockedIpRepository;
 import com.ef.repository.CustomRepositoryImpl;
 import com.ef.service.AccessLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +12,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 @SpringBootApplication
@@ -20,6 +20,8 @@ public class Parser implements CommandLineRunner {
 
     private AccessLogService accessLogService;
 
+    private BlockedIpRepository blockedIpRepository;
+
 
     public static void main(String[] args) {
         SpringApplication.run(Parser.class, args);
@@ -27,26 +29,26 @@ public class Parser implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Instant start = Instant.now();
         Command command = new Command(args);
 
         if (command.isContainInsertComand()) {
-            System.out.println("88888888888888888888888888888888888888888888888888888888888 = " + System.nanoTime());
             accessLogService.insert(command);
-            System.out.println("77777777777777777777777777777777777777777777777777777777777777777 = " + System.nanoTime());
         }
-        System.out.println("BBBBBBBBBBBBBB = " + System.nanoTime());
+
         List<AccessIpStatistics> result = accessLogService.search(command);
+        System.out.println("---------------------------------------");
+        System.out.println("|--------IP---------|------COUNT------|");
+        result.forEach(each -> {
+            System.out.println("  " + each.getIp() + "\t|  " + each.getIpCount() + " ");
+            BlockedIp blockedIp = new BlockedIp();
+            blockedIp.setIp(each.getIp());
+            blockedIp.setAccessCount(each.getIpCount());
+            blockedIp.setBlockReason("The IP accessed more than " + command.getThreshold() + " " + command.getDuration().toString());
+            blockedIpRepository.save(blockedIp);
+            System.out.println("|-------------------|----------------|");
 
-        result.forEach(System.out::println);
+        });
 
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("ZZZZZZZZZZZZZZZ = " + System.nanoTime());
-            Instant finish = Instant.now();
-            long timeElapsed = Duration.between(start, finish).getSeconds();
-            System.out.println("timeElapsed = " + timeElapsed);
-        }));
 
 
     }
@@ -58,5 +60,14 @@ public class Parser implements CommandLineRunner {
     @Autowired
     public void setAccessLogService(AccessLogService accessLogService) {
         this.accessLogService = accessLogService;
+    }
+
+    public BlockedIpRepository getBlockedIpRepository() {
+        return blockedIpRepository;
+    }
+
+    @Autowired
+    public void setBlockedIpRepository(BlockedIpRepository blockedIpRepository) {
+        this.blockedIpRepository = blockedIpRepository;
     }
 }

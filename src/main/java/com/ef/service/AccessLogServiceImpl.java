@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -60,10 +59,16 @@ public class AccessLogServiceImpl implements AccessLogService {
             throw new RuntimeException("File " + accessLogPath + " is not exist");
         }
 
+        long initialValue = 1;
+        AccessLog lastAccessLog = accessLogRepository.findFirstByOrderByIdDesc();
+        if (lastAccessLog != null) {
+            initialValue = lastAccessLog.getId() + 1;
+        }
+
         Scanner accessLogScanner = new Scanner(accessLogStream);
         List<AccessLog> list = new ArrayList<>();
-        Integer threadIndex = 0;
-        AtomicLong atomicLong = new AtomicLong(1);
+
+        AtomicLong atomicLong = new AtomicLong(initialValue);
         while (accessLogScanner.hasNext()) {
             String nextLine = accessLogScanner.nextLine();
             String[] data = nextLine.split("\\|");
@@ -77,13 +82,11 @@ public class AccessLogServiceImpl implements AccessLogService {
             list.add(accessLog);
         }
 
-        System.out.println("AAAAAAAAAAA = " + System.nanoTime());
 
         List<MyCallable> futureList = new ArrayList<>();
         for (int i = 0; i < list.size(); i += recordCounts) {
 
             List<AccessLog> bulk = list.subList(i, (i + recordCounts) < (list.size() - 1) ? (i + recordCounts) : list.size());
-            //constructThread(bulk);
             MyCallable callable = constructCallable(bulk);
             futureList.add(callable);
 
@@ -96,7 +99,6 @@ public class AccessLogServiceImpl implements AccessLogService {
 
 
         executorService.shutdown();
-        System.out.println("AAAAAAAAAAA = " + System.nanoTime());
     }
 
     @Override
@@ -118,45 +120,8 @@ public class AccessLogServiceImpl implements AccessLogService {
         return java.sql.Timestamp.valueOf(dateToConvert);
     }
 
-    private void constructThread(List<AccessLog> list) {
-
-        executorService.submit(
-                () -> {
-                    String name = Thread.currentThread().getName();
-
-                    Instant start = Instant.now();
-                    System.out.println(name + " Thread Start " + new Date());
-                    accessLogRepository.saveAll(list);
-
-
-                    System.out.println(name + " Thread Finish " + new Date());
-                    Instant finish = Instant.now();
-
-                    long timeElapsed = java.time.Duration.between(start, finish).toMillis();
-                    System.out.println("timeElapsed " + name + " = " + timeElapsed);
-                });
-
-    }
-
 
     private MyCallable constructCallable(List<AccessLog> list) {
-
-       /* Callable callable = () -> {
-            String name = Thread.currentThread().getName();
-
-            Instant start = Instant.now();
-            System.out.println(name + " Thread Start " + new Date());
-            accessLogRepository.saveAll(list);
-
-
-            System.out.println(name + " Thread Finish " + new Date());
-            Instant finish = Instant.now();
-
-            long timeElapsed = java.time.Duration.between(start, finish).toMillis();
-            System.out.println("timeElapsed " + name + " = " + timeElapsed);
-
-            return null;
-        };*/
         return new MyCallable(list);
     }
 
@@ -168,29 +133,11 @@ public class AccessLogServiceImpl implements AccessLogService {
         }
 
         public Long call() {
-            String name = Thread.currentThread().getName();
-
-            Instant start = Instant.now();
-            System.out.println(name + " Thread Start " + new Date());
             accessLogRepository.saveAll(list);
-
-
-            System.out.println(name + " Thread Finish " + new Date());
-            Instant finish = Instant.now();
-
-            long timeElapsed = java.time.Duration.between(start, finish).toMillis();
-            System.out.println("timeElapsed " + name + " = " + timeElapsed);
-
             return null;
         }
     }
 
-    /*private LocalDateTime parseDate(String accessDate) {
-        String dateTimePattern = "yyyy-MM-dd HH:mm:ss.SSS";
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
-
-        return LocalDateTime.parse(accessDate, dateFormatter);
-    }*/
 
     private Date parseDate(String accessDate) {
         try {
