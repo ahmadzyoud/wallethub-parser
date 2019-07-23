@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.util.List;
+import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = CustomRepositoryImpl.class)
@@ -30,12 +31,16 @@ public class Parser implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         Command command = new Command(args);
-
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         if (command.isContainInsertComand()) {
             accessLogService.insert(command);
         }
 
         List<AccessIpStatistics> result = accessLogService.search(command);
+        if (result == null || result.isEmpty()) {
+            System.out.println("No results have been found");
+            return;
+        }
         System.out.println("---------------------------------------");
         System.out.println("|--------IP---------|------COUNT------|");
         result.forEach(each -> {
@@ -48,7 +53,6 @@ public class Parser implements CommandLineRunner {
             System.out.println("|-------------------|----------------|");
 
         });
-
 
 
     }
