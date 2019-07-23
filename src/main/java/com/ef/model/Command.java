@@ -50,8 +50,8 @@ public class Command {
                 .build();
 
         Option thresholdArg = Option.builder()
-                .longOpt("threshold")
-                .argName("threshold")
+                .longOpt(THRESHOLD_ARG)
+                .argName(THRESHOLD_ARG)
                 .hasArg()
                 .desc("threshold")
                 .required()
@@ -64,14 +64,6 @@ public class Command {
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
-
-        if (!cmd.hasOption(START_DATE_ARG) || !cmd.hasOption(DURATION_ARG) || !cmd.hasOption("threshold")) {
-            throw new RuntimeException("args Should be either like this format\n" +
-                    "--accesslog=/path/to/file --startDate=2017-01-01.13:00:00 --duration=hourly --threshold=100\n" +
-                    " or \n" +
-                    "--startDate=2017-01-01.15:00:00 --duration=hourly --threshold=200");
-        }
-
 
         if (cmd.hasOption(ACCESS_LOG_ARG)) {
             String accessLogValue = cmd.getOptionValue(ACCESS_LOG_ARG);

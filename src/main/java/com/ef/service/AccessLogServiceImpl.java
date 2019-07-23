@@ -2,9 +2,11 @@ package com.ef.service;
 
 import com.ef.domain.AccessIpStatistics;
 import com.ef.domain.AccessLog;
+import com.ef.domain.BlockedIp;
 import com.ef.model.Command;
 import com.ef.model.enumeration.Duration;
 import com.ef.repository.AccessLogRepository;
+import com.ef.repository.BlockedIpRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 ;
 
@@ -32,6 +35,8 @@ public class AccessLogServiceImpl implements AccessLogService {
     public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
 
     private AccessLogRepository accessLogRepository;
+
+    private BlockedIpRepository blockedIpRepository;
 
     private ExecutorService executorService = Executors.newFixedThreadPool(11);
 
@@ -45,6 +50,15 @@ public class AccessLogServiceImpl implements AccessLogService {
     @Autowired
     public void setAccessLogRepository(AccessLogRepository accessLogRepository) {
         this.accessLogRepository = accessLogRepository;
+    }
+
+    public BlockedIpRepository getBlockedIpRepository() {
+        return blockedIpRepository;
+    }
+
+    @Autowired
+    public void setBlockedIpRepository(BlockedIpRepository blockedIpRepository) {
+        this.blockedIpRepository = blockedIpRepository;
     }
 
     @Override
@@ -113,7 +127,23 @@ public class AccessLogServiceImpl implements AccessLogService {
         }
 
 
-        return accessLogRepository.findOverThresholdIp(convertToDateViaSqlTimestamp(startDate), convertToDateViaSqlTimestamp(endDate), threshold.longValue());
+        List<AccessIpStatistics> result = accessLogRepository.findOverThresholdIp(convertToDateViaSqlTimestamp(startDate), convertToDateViaSqlTimestamp(endDate), threshold.longValue());
+
+        if (result != null && !result.isEmpty()) {
+            List<BlockedIp> blockedIpList = result.stream().map(each -> {
+                BlockedIp blockedIp = new BlockedIp();
+                blockedIp.setIp(each.getIp());
+                blockedIp.setAccessCount(each.getIpCount());
+                blockedIp.setBlockReason("The IP accessed more than " + command.getThreshold() + " " + command.getDuration().toString());
+                return blockedIp;
+            }).collect(Collectors.toList());
+
+            blockedIpRepository.saveAll(blockedIpList);
+
+        }
+
+
+        return result;
     }
 
     public Date convertToDateViaSqlTimestamp(LocalDateTime dateToConvert) {
